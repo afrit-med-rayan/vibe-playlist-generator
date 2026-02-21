@@ -21,6 +21,10 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'spotify_id',
+        'spotify_token',
+        'spotify_refresh_token',
+        'avatar',
     ];
 
     /**
