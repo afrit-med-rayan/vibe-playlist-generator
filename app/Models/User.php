@@ -49,4 +49,12 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * The user has many vibe sessions.
+     */
+    public function vibeSessions()
+    {
+        return $this->hasMany(VibeSession::class);
+    }
 }
