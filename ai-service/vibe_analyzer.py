@@ -162,8 +162,9 @@ def generate_caption(image_bytes: bytes) -> str:
     _load_model()
     image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
     inputs = _processor(image, return_tensors="pt")  # type: ignore[arg-type]
-    output = _model.generate(**inputs, max_new_tokens=50)  # type: ignore[union-attr]
+    output = _model.generate(**inputs, max_new_tokens=60, num_beams=4)  # type: ignore[union-attr]
     caption: str = _processor.decode(output[0], skip_special_tokens=True)  # type: ignore[union-attr]
+    logger.info("BLIP caption: '%s'", caption)
     return caption.strip()
 
 
@@ -175,6 +176,7 @@ def extract_keywords(caption: str) -> List[str]:
     """
     Tokenise caption, POS-tag it, and keep nouns (NN*) + adjectives (JJ*).
     Also perform a direct lookup against VIBE_MAP keys for exact matches.
+    Keywords are sorted by VIBE_MAP relevance first, then by position.
     """
     # Clean and tokenize
     text = re.sub(r"[^a-zA-Z\s]", "", caption.lower())
@@ -183,7 +185,7 @@ def extract_keywords(caption: str) -> List[str]:
     # Remove stopwords
     tokens = [t for t in tokens if t not in STOPWORDS and len(t) > 2]
 
-    # POS-tag and keep nouns + adjectives
+    # POS-tag and keep nouns + adjectives + verbs
     tagged = nltk.pos_tag(tokens)
     keywords: List[str] = [
         word for word, tag in tagged if tag.startswith(("NN", "JJ", "VB"))
@@ -197,7 +199,16 @@ def extract_keywords(caption: str) -> List[str]:
             seen.add(kw)
             unique_keywords.append(kw)
 
-    return unique_keywords[:15]  # cap at 15
+    # Sort: VIBE_MAP hits first (they carry scoring weight), then the rest
+    vibe_hits  = [kw for kw in unique_keywords if kw in VIBE_MAP]
+    other_kws  = [kw for kw in unique_keywords if kw not in VIBE_MAP]
+    sorted_kws = vibe_hits + other_kws
+
+    logger.info(
+        "Extracted %d keywords (%d VIBE_MAP hits): %s",
+        len(sorted_kws), len(vibe_hits), sorted_kws[:10],
+    )
+    return sorted_kws[:15]  # cap at 15
 
 
 # ---------------------------------------------------------------------------
