@@ -41,6 +41,15 @@ nltk.download('stopwords', quiet=True); \
 nltk.download('averaged_perceptron_tagger', quiet=True); \
 nltk.download('averaged_perceptron_tagger_eng', quiet=True)"
 
+# ── Pre-download BLIP model at build time (cached as a Docker layer) ─────────
+# This bakes the model weights into the image so the first request is instant.
+# Remove this step if you prefer a smaller image and are fine with first-start latency.
+RUN python -c "\
+from transformers import BlipProcessor, BlipForConditionalGeneration; \
+BlipProcessor.from_pretrained('Salesforce/blip-image-captioning-base'); \
+BlipForConditionalGeneration.from_pretrained('Salesforce/blip-image-captioning-base'); \
+print('BLIP model pre-downloaded ✓')"
+
 # ── Application source ────────────────────────────────────────────────────────
 COPY . .
 
