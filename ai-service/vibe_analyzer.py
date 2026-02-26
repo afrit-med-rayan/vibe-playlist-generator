@@ -217,27 +217,40 @@ def extract_keywords(caption: str) -> List[str]:
 
 def score_vibe(keywords: List[str]) -> Dict[str, float]:
     """
-    Accumulate VIBE_MAP deltas for each keyword, then clamp to valid ranges.
+    Accumulate VIBE_MAP deltas for each keyword using position-decay weighting.
+
+    Keywords that appear earlier (and are VIBE_MAP hits, sorted first by
+    extract_keywords) receive full weight; subsequent keywords are discounted
+    by factor 1 / (1 + i * 0.15) to avoid runaway accumulation.
+
     Returns dict with energy, valence, tempo, acousticness.
     """
-    energy      = _DEFAULTS["energy"]
-    valence     = _DEFAULTS["valence"]
-    tempo       = _DEFAULTS["tempo"]
-    acousticness= _DEFAULTS["acousticness"]
+    energy       = _DEFAULTS["energy"]
+    valence      = _DEFAULTS["valence"]
+    tempo        = _DEFAULTS["tempo"]
+    acousticness = _DEFAULTS["acousticness"]
 
-    matches = 0
+    matched: List[str] = []
+    hit_idx = 0  # counts only matching keywords (for decay)
+
     for kw in keywords:
         if kw in VIBE_MAP:
+            weight = 1.0 / (1.0 + hit_idx * 0.15)  # decay: 1.0, 0.87, 0.77 …
             de, dv, dt, da = VIBE_MAP[kw]
-            energy       += de
-            valence      += dv
-            tempo        += dt
-            acousticness += da
-            matches      += 1
+            energy       += de * weight
+            valence      += dv * weight
+            tempo        += dt * weight
+            acousticness += da * weight
+            matched.append(kw)
+            hit_idx += 1
 
-    logger.debug("VIBE_MAP matched %d / %d keywords", matches, len(keywords))
+    logger.info(
+        "VIBE_MAP scoring — %d/%d matched: %s | raw scores: E=%.3f V=%.3f T=%.1f A=%.3f",
+        len(matched), len(keywords), matched,
+        energy, valence, tempo, acousticness,
+    )
 
-    # Clamp
+    # Clamp to valid Spotify API ranges
     energy       = max(0.05, min(0.99, energy))
     valence      = max(0.05, min(0.99, valence))
     tempo        = max(40.0, min(220.0, tempo))
