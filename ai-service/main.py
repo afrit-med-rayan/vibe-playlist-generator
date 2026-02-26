@@ -12,6 +12,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 
 from models import HealthResponse, VibeResponse
 from vibe_analyzer import analyze_image
@@ -66,10 +67,27 @@ app.add_middleware(
 # Routes
 # ---------------------------------------------------------------------------
 
+@app.get("/", include_in_schema=False)
+async def root():
+    """Redirect root to the interactive API docs."""
+    return RedirectResponse(url="/docs")
+
+
 @app.get("/health", response_model=HealthResponse, tags=["Utility"])
 async def health_check():
     """Simple liveness probe."""
     return HealthResponse(status="ok")
+
+
+@app.get("/info", tags=["Utility"])
+async def service_info():
+    """Returns service metadata — useful for debugging and monitoring."""
+    return {
+        "service": "vibe-ai-service",
+        "version": "1.0.0",
+        "description": "BLIP image captioning + VIBE_MAP audio feature scoring",
+        "endpoints": ["/analyze-image", "/health", "/info", "/docs"],
+    }
 
 
 @app.post("/analyze-image", response_model=VibeResponse, tags=["Analysis"])
