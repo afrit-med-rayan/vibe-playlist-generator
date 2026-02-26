@@ -1,0 +1,22 @@
+# ── Web framework ────────────────────────────────────────────────────────────
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+python-multipart==0.0.20
+
+# ── Vision model ─────────────────────────────────────────────────────────────
+# CPU-only torch — removes the CUDA overhead in the Docker image.
+# On a GPU host, replace with the appropriate CUDA wheel.
+torch==2.5.1+cpu
+torchvision==0.20.1+cpu
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+transformers==4.47.1
+Pillow==11.1.0
+sentencepiece==0.2.0
+
+# ── NLP ──────────────────────────────────────────────────────────────────────
+nltk==3.9.1
+
+# ── Utilities ────────────────────────────────────────────────────────────────
+pydantic==2.10.4
+httpx==0.28.1
