@@ -1,0 +1,72 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 4.18kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.11-slim
+#2 DONE 1.5s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 182B done
+#3 DONE 0.0s
+
+#4 [1/9] FROM docker.io/library/python:3.11-slim@sha256:c8271b1f627d0068857dce5b53e14a9558603b527e46f1f901722f935b786a39
+#4 DONE 0.0s
+
+#5 [2/9] WORKDIR /app
+#5 CACHED
+
+#6 [internal] load build context
+#6 transferring context: 222B done
+#6 DONE 0.0s
+
+#7 [3/9] RUN apt-get update && apt-get install -y --no-install-recommends         build-essential         libglib2.0-0         libsm6         libxrender1         libxext6         libgl1-mesa-glx     && rm -rf /var/lib/apt/lists/*
+#7 20.31 Ign:1 http://deb.debian.org/debian trixie InRelease
+#7 40.34 Ign:2 http://deb.debian.org/debian trixie-updates InRelease
+#7 41.56 Get:3 http://deb.debian.org/debian-security trixie-security InRelease [43.4 kB]
+#7 41.64 Hit:1 http://deb.debian.org/debian trixie InRelease
+#7 41.68 Get:2 http://deb.debian.org/debian trixie-updates InRelease [47.3 kB]
+#7 41.75 Get:4 http://deb.debian.org/debian-security trixie-security/main amd64 Packages [113 kB]
+#7 41.81 Get:5 http://deb.debian.org/debian trixie/main amd64 Packages [9670 kB]
+#7 43.53 Get:6 http://deb.debian.org/debian trixie-updates/main amd64 Packages [5412 B]
+#7 44.26 Fetched 9879 kB in 44s (225 kB/s)
+#7 44.26 Reading package lists...
+#7 44.84 Reading package lists...
+#7 45.34 Building dependency tree...
+#7 45.49 Reading state information...
+#7 45.52 Package libgl1-mesa-glx is not available, but is referred to by another package.
+#7 45.52 This may mean that the package is missing, has been obsoleted, or
+#7 45.52 is only available from another source
+#7 45.52 
+#7 45.52 E: Package 'libgl1-mesa-glx' has no installation candidate
+#7 ERROR: process "/bin/sh -c apt-get update && apt-get install -y --no-install-recommends         build-essential         libglib2.0-0         libsm6         libxrender1         libxext6         libgl1-mesa-glx     && rm -rf /var/lib/apt/lists/*" did not complete successfully: exit code: 100
+------
+ > [3/9] RUN apt-get update && apt-get install -y --no-install-recommends         build-essential         libglib2.0-0         libsm6         libxrender1         libxext6         libgl1-mesa-glx     && rm -rf /var/lib/apt/lists/*:
+43.53 Get:6 http://deb.debian.org/debian trixie-updates/main amd64 Packages [5412 B]
+
+
+
+45.49 Reading state information...
+45.52 Package libgl1-mesa-glx is not available, but is referred to by another package.
+45.52 This may mean that the package is missing, has been obsoleted, or
+45.52 is only available from another source
+45.52 
+45.52 E: Package 'libgl1-mesa-glx' has no installation candidate
+------
+Dockerfile:21
+--------------------
+  20 |     # ── System dependencies ───────────────────────────────────────────────────────
+  21 | >>> RUN apt-get update && apt-get install -y --no-install-recommends \
+  22 | >>>         build-essential \
+  23 | >>>         libglib2.0-0 \
+  24 | >>>         libsm6 \
+  25 | >>>         libxrender1 \
+  26 | >>>         libxext6 \
+  27 | >>>         libgl1-mesa-glx \
+  28 | >>>     && rm -rf /var/lib/apt/lists/*
+  29 |     
+--------------------
+ERROR: failed to solve: process "/bin/sh -c apt-get update && apt-get install -y --no-install-recommends         build-essential         libglib2.0-0         libsm6         libxrender1         libxext6         libgl1-mesa-glx     && rm -rf /var/lib/apt/lists/*" did not complete successfully: exit code: 100
+
+View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/rnbo2akpk5nvafq7rw5yz6p8e

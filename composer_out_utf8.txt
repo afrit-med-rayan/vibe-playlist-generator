@@ -1,0 +1,93 @@
+﻿php : ./composer.json 
+has been updated
+At line:1 char:1
++ php composer.phar 
+require socialiteprovid
+ers/spotify 2>&1 | 
+Out-File  ...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (./composer.js   
+ on has been update    
+d:String) [], Remo    
+teException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+Running composer 
+update socialiteprovide
+rs/spotify
+Loading composer 
+repositories with 
+package information
+Updating dependencies
+Your requirements 
+could not be resolved 
+to an installable set 
+of packages.
+
+  Problem 1
+    - 
+laravel/framework is 
+locked to version 
+v11.48.0 and an update 
+of this package was 
+not requested.
+    - 
+laravel/framework 
+v11.48.0 requires 
+league/flysystem-local 
+^3.25.1 -> satisfiable 
+by league/flysystem-loc
+al[3.31.0].
+    - 
+league/flysystem-local 
+3.31.0 requires 
+ext-fileinfo * -> it 
+is missing from your 
+system. Install or 
+enable PHP's fileinfo 
+extension.
+
+To enable extensions, 
+verify that they are 
+enabled in your .ini 
+files:
+    - 
+C:\php-8.3.6\php.ini
+You can also run `php 
+--ini` in a terminal 
+to see which files are 
+used by PHP in CLI 
+mode.
+Alternatively, you can 
+run Composer with `--ig
+nore-platform-req=ext-f
+ileinfo` to 
+temporarily ignore 
+these required 
+extensions.
+You can also try 
+re-running composer 
+require with an 
+explicit version 
+constraint, e.g. 
+"composer require socia
+liteproviders/spotify:*
+" to figure out if any 
+version is 
+installable, or 
+"composer require socia
+liteproviders/spotify:^
+2.1" if you know which 
+you need.
+
+Installation failed, 
+reverting 
+./composer.json and 
+./composer.lock to 
+their original content.
