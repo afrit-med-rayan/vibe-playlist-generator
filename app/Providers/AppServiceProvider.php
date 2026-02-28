@@ -27,8 +27,9 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::policy(VibeSession::class, VibeSessionPolicy::class);
 
-        Event::listen(function (SocialiteWasCalled $event) {
-            $event->extendSocialite('spotify', SpotifyExtendSocialite::class);
-        });
+        Event::listen(
+            SocialiteWasCalled::class,
+            [SpotifyExtendSocialite::class, 'handle']
+        );
     }
 }
