@@ -424,11 +424,12 @@
     <div class="welcome-banner">
         <div class="welcome-text">
             <h2>Hey, {{ Auth::user()->name ?? 'there' }} 👋</h2>
-            <p>Upload a photo below and let AI craft your perfect Spotify playlist.</p>
+            <p>Upload a photo below. AI detects the mood &rarr; Last.fm tags &rarr; Deezer playlist with 30s previews.</p>
         </div>
-        @if(Auth::user()->spotify_id)
-            <span class="spotify-chip">✓ Spotify Connected</span>
-        @endif
+        <span class="spotify-chip"
+            style="background:rgba(124,58,237,0.15);border-color:rgba(124,58,237,0.35);color:#a78bfa;">
+            🎧 Last.fm + Deezer
+        </span>
     </div>
 
     <div class="dashboard-grid">

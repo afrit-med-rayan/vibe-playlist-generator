@@ -1,153 +1,295 @@
-@extends('layouts.app')
+<!DOCTYPE html>
+<html lang="en">
 
-@section('title', 'Your Vibe Results')
-
-@section('content')
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Vibe Result — VibeCraft</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <style>
-        /* ─── Back nav ─── */
-        .back-btn {
-            display: inline-flex;
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --purple: #7C3AED;
+            --purple-light: #A78BFA;
+            --blue: #3B82F6;
+            --bg: #0a0a1a;
+            --glass: rgba(255, 255, 255, 0.06);
+            --glass-border: rgba(255, 255, 255, 0.11);
+            --text: #F1F0FF;
+            --muted: rgba(241, 240, 255, 0.55);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Orbs */
+        .bg-orbs {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            opacity: 0.35;
+        }
+
+        .orb-1 {
+            width: 600px;
+            height: 600px;
+            background: var(--purple);
+            top: -200px;
+            left: -150px;
+        }
+
+        .orb-2 {
+            width: 400px;
+            height: 400px;
+            background: #1e40af;
+            bottom: -150px;
+            right: -100px;
+        }
+
+        /* Nav */
+        nav {
+            display: flex;
             align-items: center;
-            gap: 0.4rem;
-            color: rgba(241, 240, 255, 0.5);
+            justify-content: space-between;
+            padding: 1.1rem 2rem;
+            background: rgba(10, 10, 26, 0.75);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 800;
+            font-size: 1.1rem;
             text-decoration: none;
-            font-size: 0.85rem;
+            color: var(--text);
+        }
+
+        .brand-icon {
+            background: linear-gradient(135deg, var(--purple), var(--blue));
+            border-radius: 8px;
+            padding: 5px 8px;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .btn-sm {
+            padding: 0.45rem 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass);
+            color: var(--text);
+            font-size: 0.82rem;
             font-weight: 500;
-            margin-bottom: 2rem;
-            transition: color 0.2s;
+            text-decoration: none;
+            transition: all 0.2s;
+            font-family: inherit;
+            cursor: pointer;
         }
 
-        .back-btn:hover {
-            color: rgba(241, 240, 255, 0.9);
+        .btn-sm:hover {
+            background: rgba(255, 255, 255, 0.1);
         }
 
-        /* ─── Top grid ─── */
-        .result-top {
+        /* Main layout */
+        main {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem 5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Page header */
+        .page-header {
+            margin-bottom: 2.5rem;
+        }
+
+        .page-header h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+        }
+
+        .page-header p {
+            color: var(--muted);
+            margin-top: 0.35rem;
+            font-size: 0.9rem;
+        }
+
+        /* Alert */
+        .alert-success {
+            background: rgba(34, 197, 94, 0.12);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            color: #86efac;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            color: #fca5a5;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        /* Grid */
+        .result-grid {
             display: grid;
-            grid-template-columns: 360px 1fr;
-            gap: 1.75rem;
-            margin-bottom: 1.75rem;
-            align-items: start;
+            grid-template-columns: 340px 1fr;
+            gap: 2rem;
         }
 
-        /* ─── Image card ─── */
-        .image-card {
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+        @media (max-width: 800px) {
+            .result-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Sidebar */
+        .sidebar-card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
             border-radius: 20px;
-            overflow: hidden;
+            padding: 1.5rem;
+            height: fit-content;
+            position: sticky;
+            top: 80px;
         }
 
         .vibe-image {
             width: 100%;
-            height: 280px;
+            aspect-ratio: 1/1;
             object-fit: cover;
+            border-radius: 14px;
             display: block;
+            margin-bottom: 1.25rem;
         }
 
-        .image-card-body {
-            padding: 1.25rem;
-        }
-
-        .playlist-status {
+        .vibe-image-placeholder {
+            width: 100%;
+            aspect-ratio: 1/1;
+            border-radius: 14px;
+            background: rgba(124, 58, 237, 0.08);
+            border: 2px dashed rgba(124, 58, 237, 0.35);
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            font-size: 0.78rem;
+            justify-content: center;
+            font-size: 3rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .caption-text {
+            font-size: 0.95rem;
             font-weight: 600;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+            color: var(--text);
         }
 
-        .playlist-status.created {
-            color: #4ade80;
-        }
-
-        .playlist-status.pending {
-            color: rgba(241, 240, 255, 0.5);
-        }
-
-        .status-dot {
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            background: currentColor;
-        }
-
-        /* ─── Vibe info card ─── */
-        .vibe-info-card {
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 20px;
-            padding: 1.75rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        .vibe-caption {
-            font-size: 1.35rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            line-height: 1.35;
-        }
-
-        .section-label-sm {
-            font-size: 0.7rem;
+        .section-label {
+            font-size: 0.68rem;
             font-weight: 700;
             letter-spacing: 0.1em;
             text-transform: uppercase;
-            color: rgba(241, 240, 255, 0.4);
+            color: var(--purple-light);
             margin-bottom: 0.6rem;
         }
 
-        .keywords-wrap {
+        /* Mood tags */
+        .mood-tags {
             display: flex;
             flex-wrap: wrap;
             gap: 0.4rem;
+            margin-bottom: 1.5rem;
         }
 
-        .kw-badge {
-            padding: 0.25rem 0.7rem;
+        .mood-tag {
+            padding: 0.3rem 0.75rem;
             border-radius: 99px;
             font-size: 0.78rem;
             font-weight: 600;
-            background: rgba(124, 58, 237, 0.18);
+            background: rgba(124, 58, 237, 0.15);
             border: 1px solid rgba(124, 58, 237, 0.35);
-            color: #A78BFA;
+            color: var(--purple-light);
         }
 
-        /* ─── Bars ─── */
-        .bars-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
+        .mood-tag:nth-child(2) {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.35);
+            color: #93c5fd;
+        }
+
+        .mood-tag:nth-child(3) {
+            background: rgba(236, 72, 153, 0.15);
+            border-color: rgba(236, 72, 153, 0.35);
+            color: #f9a8d4;
+        }
+
+        .mood-tag:nth-child(4) {
+            background: rgba(34, 197, 94, 0.15);
+            border-color: rgba(34, 197, 94, 0.35);
+            color: #86efac;
+        }
+
+        /* Feature bars */
+        .feature-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 0.7rem;
+            margin-bottom: 1.5rem;
         }
 
         .bar-row {
             display: flex;
             flex-direction: column;
-            gap: 0.4rem;
+            gap: 0.25rem;
         }
 
-        .bar-header {
+        .bar-info {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-        }
-
-        .bar-name {
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: rgba(241, 240, 255, 0.7);
-        }
-
-        .bar-val {
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: rgba(241, 240, 255, 0.9);
+            font-size: 0.75rem;
+            color: var(--muted);
         }
 
         .bar-track {
-            height: 6px;
+            height: 5px;
             background: rgba(255, 255, 255, 0.07);
             border-radius: 99px;
             overflow: hidden;
@@ -156,356 +298,467 @@
         .bar-fill {
             height: 100%;
             border-radius: 99px;
-            transition: width 1s cubic-bezier(.22, .61, .36, 1);
+            background: linear-gradient(90deg, var(--purple), var(--blue));
         }
 
-        .bar-fill-energy {
-            background: linear-gradient(90deg, #7C3AED, #EC4899);
-        }
-
-        .bar-fill-valence {
-            background: linear-gradient(90deg, #1DB954, #4ade80);
-        }
-
-        .bar-fill-tempo {
-            background: linear-gradient(90deg, #F97316, #FBBF24);
-        }
-
-        .bar-fill-acousticness {
-            background: linear-gradient(90deg, #3B82F6, #67E8F9);
-        }
-
-        /* ─── Playlist section ─── */
-        .playlist-section {
-            margin-bottom: 1.75rem;
-        }
-
-        .section-row {
+        /* Keywords */
+        .keywords {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 1rem;
-            gap: 1rem;
             flex-wrap: wrap;
+            gap: 0.35rem;
+            margin-bottom: 1.5rem;
         }
 
-        .section-row h2 {
-            font-size: 1.1rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
+        .kw {
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--muted);
         }
 
-        .btn-create-playlist {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.65rem 1.35rem;
-            border-radius: 10px;
-            background: #1DB954;
-            color: #000;
-            font-weight: 700;
-            font-size: 0.875rem;
-            font-family: inherit;
+        /* Save playlist btn */
+        .btn-save-playlist {
+            width: 100%;
+            padding: 0.8rem;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--purple), var(--blue));
             border: none;
+            color: #fff;
+            font-size: 0.9rem;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
             cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 0 24px rgba(29, 185, 84, 0.3);
+            transition: opacity 0.2s, transform 0.2s;
         }
 
-        .btn-create-playlist:hover {
+        .btn-save-playlist:hover {
+            opacity: 0.9;
             transform: translateY(-1px);
-            box-shadow: 0 0 40px rgba(29, 185, 84, 0.5);
-            background: #20d65f;
         }
 
-        .btn-open-spotify {
+        /* Tracks section */
+        .tracks-section h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.35rem;
+        }
+
+        .tracks-section .sub {
+            color: var(--muted);
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Source badges */
+        .source-badges {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .source-badge {
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
-            padding: 0.65rem 1.35rem;
-            border-radius: 10px;
-            background: rgba(29, 185, 84, 0.15);
-            border: 1px solid rgba(29, 185, 84, 0.4);
-            color: #4ade80;
-            font-weight: 700;
-            font-size: 0.875rem;
-            font-family: inherit;
-            text-decoration: none;
-            cursor: pointer;
-            transition: all 0.2s;
+            gap: 0.35rem;
+            padding: 0.3rem 0.75rem;
+            border-radius: 99px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            border: 1px solid;
         }
 
-        .btn-open-spotify:hover {
-            background: rgba(29, 185, 84, 0.25);
+        .badge-lastfm {
+            background: rgba(188, 0, 0, 0.12);
+            border-color: rgba(188, 0, 0, 0.35);
+            color: #fca5a5;
         }
 
-        /* ─── Tracks grid ─── */
-        .tracks-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 0.85rem;
+        .badge-deezer {
+            background: rgba(105, 36, 255, 0.12);
+            border-color: rgba(105, 36, 255, 0.35);
+            color: #c4b5fd;
+        }
+
+        /* Track list */
+        .track-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
         }
 
         .track-card {
-            display: flex;
+            display: grid;
+            grid-template-columns: 52px 1fr auto;
             align-items: center;
             gap: 0.85rem;
-            padding: 0.85rem 1rem;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 14px;
+            padding: 0.7rem 1rem;
             transition: all 0.2s;
-            text-decoration: none;
-            color: inherit;
         }
 
         .track-card:hover {
             background: rgba(255, 255, 255, 0.09);
-            border-color: rgba(255, 255, 255, 0.15);
-            transform: translateY(-1px);
+            border-color: rgba(255, 255, 255, 0.18);
         }
 
-        .track-number {
-            font-size: 0.72rem;
-            font-weight: 700;
-            color: rgba(241, 240, 255, 0.25);
-            width: 20px;
-            text-align: right;
-            flex-shrink: 0;
-        }
-
-        .track-cover {
-            width: 42px;
-            height: 42px;
-            border-radius: 6px;
+        .track-artwork {
+            width: 52px;
+            height: 52px;
+            border-radius: 10px;
             object-fit: cover;
+            background: rgba(124, 58, 237, 0.2);
             flex-shrink: 0;
-            background: rgba(124, 58, 237, 0.25);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1rem;
-            overflow: hidden;
+            font-size: 1.5rem;
         }
 
-        .track-cover img {
-            width: 100%;
-            height: 100%;
+        .track-artwork img {
+            width: 52px;
+            height: 52px;
+            border-radius: 10px;
             object-fit: cover;
+            display: block;
         }
 
         .track-info {
-            flex: 1;
-            min-width: 0;
+            overflow: hidden;
         }
 
-        .track-name {
-            font-size: 0.85rem;
+        .track-title {
+            font-size: 0.88rem;
             font-weight: 600;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            color: rgba(241, 240, 255, 0.95);
         }
 
         .track-artist {
-            font-size: 0.75rem;
-            color: rgba(241, 240, 255, 0.45);
+            font-size: 0.78rem;
+            color: var(--muted);
+            margin-top: 0.15rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .track-album {
+            font-size: 0.68rem;
+            color: rgba(241, 240, 255, 0.35);
             margin-top: 0.1rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        .track-duration {
-            font-size: 0.72rem;
-            color: rgba(241, 240, 255, 0.35);
+        .track-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
             flex-shrink: 0;
         }
 
-        /* ─── No tracks empty ─── */
-        .no-tracks {
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 3rem;
-            color: rgba(241, 240, 255, 0.3);
+        /* Audio player pill */
+        .audio-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.35rem 0.7rem;
+            background: rgba(124, 58, 237, 0.18);
+            border: 1px solid rgba(124, 58, 237, 0.35);
+            border-radius: 99px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--purple-light);
+            border: none;
+            font-family: 'Inter', sans-serif;
         }
 
-        .no-tracks .no-tracks-icon {
+        .audio-pill:hover {
+            background: rgba(124, 58, 237, 0.3);
+        }
+
+        .audio-pill.playing {
+            background: rgba(34, 197, 94, 0.2);
+            color: #86efac;
+            border: 1px solid rgba(34, 197, 94, 0.35);
+        }
+
+        .audio-pill-no-preview {
+            padding: 0.35rem 0.7rem;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 99px;
+            font-size: 0.7rem;
+            color: rgba(241, 240, 255, 0.25);
+        }
+
+        .deezer-link {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.35rem 0.7rem;
+            background: rgba(105, 36, 255, 0.12);
+            border: 1px solid rgba(105, 36, 255, 0.3);
+            border-radius: 99px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #c4b5fd;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .deezer-link:hover {
+            background: rgba(105, 36, 255, 0.25);
+        }
+
+        /* No tracks state */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            color: var(--muted);
+        }
+
+        .empty-state .emoji {
             font-size: 2.5rem;
+            display: block;
             margin-bottom: 0.75rem;
         }
-
-        @media (max-width: 860px) {
-            .result-top {
-                grid-template-columns: 1fr;
-            }
-
-            .bars-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .tracks-grid {
-                grid-template-columns: 1fr;
-            }
-        }
     </style>
+</head>
 
-    <a href="{{ route('dashboard') }}" class="back-btn">← Back to Dashboard</a>
+<body>
+    <div class="bg-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+    </div>
 
-    <!-- Top: Image + Vibe Info -->
-    <div class="result-top">
-        <!-- Image -->
-        <div class="image-card">
-            @if($session->image_path)
-                <img src="{{ Storage::url($session->image_path) }}" alt="Vibe image" class="vibe-image">
-            @else
-                <div class="vibe-image"
-                    style="display:flex;align-items:center;justify-content:center;background:rgba(124,58,237,0.15);font-size:3rem;">
-                    🎨</div>
-            @endif
+    <nav>
+        <a href="/" class="brand">
+            <span class="brand-icon">🎵</span> VibeCraft
+        </a>
+        <div class="nav-links">
+            <a href="{{ route('dashboard') }}" class="btn-sm">Dashboard</a>
+            <a href="{{ route('vibe.history') }}" class="btn-sm">History</a>
+            <form action="{{ route('logout') }}" method="POST" style="display:inline">
+                @csrf
+                <button type="submit" class="btn-sm">Logout</button>
+            </form>
+        </div>
+    </nav>
 
-            <div class="image-card-body">
-                @if($session->playlist_url)
-                    <div class="playlist-status created">
-                        <span class="status-dot"></span> Playlist Created on Spotify
-                    </div>
-                @else
-                    <div class="playlist-status pending">
-                        <span class="status-dot" style="background:rgba(241,240,255,0.3)"></span> No playlist yet
-                    </div>
-                @endif
-            </div>
+    <main>
+        {{-- Alerts --}}
+        @if(session('success'))
+            <div class="alert-success">✓ {{ session('success') }}</div>
+        @endif
+        @if($errors->any())
+            <div class="alert-error">{{ $errors->first() }}</div>
+        @endif
+
+        <div class="page-header">
+            <h1>Your Vibe Result ✨</h1>
+            <p>AI detected the mood — here's your personalized playlist</p>
         </div>
 
-        <!-- Vibe info -->
-        <div class="vibe-info-card">
-            <div>
-                <div class="section-label-sm">Detected Vibe</div>
-                <div class="vibe-caption">{{ $session->caption ?? 'Your unique vibe ✨' }}</div>
-            </div>
+        <div class="result-grid">
 
-            @if($session->keywords && count($session->keywords) > 0)
-                <div>
-                    <div class="section-label-sm">Keywords</div>
-                    <div class="keywords-wrap">
-                        @foreach($session->keywords as $kw)
-                            <span class="kw-badge">{{ $kw }}</span>
+            {{-- ── Left sidebar: Image + Analysis ── --}}
+            <aside class="sidebar-card">
+                @if($session->image_path)
+                    <img src="{{ Storage::url($session->image_path) }}" alt="Your vibe image" class="vibe-image">
+                @else
+                    <div class="vibe-image-placeholder">🖼️</div>
+                @endif
+
+                @if($session->caption)
+                    <p class="caption-text">"{{ $session->caption }}"</p>
+                @endif
+
+                {{-- Mood Tags from Last.fm --}}
+                @if(!empty($moodTags))
+                    <div class="section-label">🔗 Last.fm Mood Tags</div>
+                    <div class="mood-tags">
+                        @foreach($moodTags as $tag)
+                            <span class="mood-tag"># {{ $tag }}</span>
                         @endforeach
                     </div>
-                </div>
-            @endif
+                @endif
 
-            <div>
-                <div class="section-label-sm">Audio Attributes</div>
-                <div class="bars-grid">
+                {{-- Audio feature bars --}}
+                <div class="section-label">🤖 AI Analysis</div>
+                <div class="feature-bars">
                     <div class="bar-row">
-                        <div class="bar-header">
-                            <span class="bar-name">Energy</span>
-                            <span class="bar-val">{{ round($session->energy * 100) }}%</span>
-                        </div>
+                        <div class="bar-info"><span>Energy</span><span>{{ round($session->energy * 100) }}%</span></div>
                         <div class="bar-track">
-                            <div class="bar-fill bar-fill-energy" style="width: {{ round($session->energy * 100) }}%"></div>
+                            <div class="bar-fill" style="width:{{ round($session->energy * 100) }}%"></div>
                         </div>
                     </div>
                     <div class="bar-row">
-                        <div class="bar-header">
-                            <span class="bar-name">Valence</span>
-                            <span class="bar-val">{{ round($session->valence * 100) }}%</span>
+                        <div class="bar-info"><span>Valence</span><span>{{ round($session->valence * 100) }}%</span>
                         </div>
                         <div class="bar-track">
-                            <div class="bar-fill bar-fill-valence" style="width: {{ round($session->valence * 100) }}%">
+                            <div class="bar-fill" style="width:{{ round($session->valence * 100) }}%"></div>
+                        </div>
+                    </div>
+                    <div class="bar-row">
+                        <div class="bar-info">
+                            <span>Acousticness</span><span>{{ round(($session->acousticness ?? 0.5) * 100) }}%</span>
+                        </div>
+                        <div class="bar-track">
+                            <div class="bar-fill" style="width:{{ round(($session->acousticness ?? 0.5) * 100) }}%">
                             </div>
                         </div>
                     </div>
                     <div class="bar-row">
-                        <div class="bar-header">
-                            <span class="bar-name">Tempo</span>
-                            <span class="bar-val">{{ round($session->tempo) }} BPM</span>
+                        <div class="bar-info"><span>Tempo</span><span>{{ round($session->tempo ?? 120) }} BPM</span>
                         </div>
                         <div class="bar-track">
-                            <div class="bar-fill bar-fill-tempo"
-                                style="width: {{ min(100, round($session->tempo / 200 * 100)) }}%"></div>
-                        </div>
-                    </div>
-                    <div class="bar-row">
-                        <div class="bar-header">
-                            <span class="bar-name">Acoustic</span>
-                            <span class="bar-val">{{ round(($session->acousticness ?? 0.5) * 100) }}%</span>
-                        </div>
-                        <div class="bar-track">
-                            <div class="bar-fill bar-fill-acousticness"
-                                style="width: {{ round(($session->acousticness ?? 0.5) * 100) }}%"></div>
+                            <div class="bar-fill"
+                                style="width:{{ min(100, round((($session->tempo ?? 120) - 40) / 1.8)) }}%"></div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div style="margin-top: auto">
-                @if($session->playlist_url)
-                    <a href="{{ $session->playlist_url }}" target="_blank" class="btn-open-spotify">
-                        <svg style="width:16px;height:16px;fill:currentColor" viewBox="0 0 24 24">
-                            <path
-                                d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z" />
-                        </svg>
-                        Open "{{ $session->playlist_name }}" on Spotify
-                    </a>
+                {{-- Keywords --}}
+                @if(!empty($session->keywords))
+                    <div class="section-label">Keywords</div>
+                    <div class="keywords">
+                        @foreach($session->keywords as $kw)
+                            <span class="kw">{{ $kw }}</span>
+                        @endforeach
+                    </div>
                 @endif
-            </div>
-        </div>
-    </div>
 
-    <!-- Tracks Section -->
-    <div class="playlist-section">
-        <div class="section-row">
-            <h2>🎵 Recommended Tracks</h2>
-            @if(!$session->playlist_url)
-                <form method="POST" action="{{ route('vibe.create-playlist', $session->id) }}">
-                    @csrf
-                    <button type="submit" class="btn-create-playlist">
-                        <svg style="width:15px;height:15px;fill:currentColor" viewBox="0 0 24 24">
-                            <path
-                                d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z" />
-                        </svg>
-                        Save as Spotify Playlist
-                    </button>
-                </form>
-            @endif
-        </div>
+                {{-- Save Playlist --}}
+                @if(!$session->playlist_name)
+                    <form action="{{ route('vibe.create-playlist', $session->id) }}" method="POST">
+                        @csrf
+                        <button type="submit" class="btn-save-playlist">💾 Save This Playlist</button>
+                    </form>
+                @else
+                    <div
+                        style="text-align:center; color:#86efac; font-size:0.85rem; font-weight:600; padding:0.75rem; background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.25); border-radius:10px;">
+                        ✓ Saved as "{{ $session->playlist_name }}"
+                    </div>
+                @endif
+            </aside>
 
-        <div class="tracks-grid">
-            @forelse($tracks as $i => $track)
-                <a href="{{ $track['external_urls']['spotify'] ?? '#' }}" target="_blank" class="track-card">
-                    <div class="track-number">{{ $i + 1 }}</div>
-                    <div class="track-cover">
-                        @if(!empty($track['album']['images'][0]['url']))
-                            <img src="{{ $track['album']['images'][0]['url'] }}" alt="cover">
-                        @else
-                            🎵
-                        @endif
-                    </div>
-                    <div class="track-info">
-                        <div class="track-name">{{ $track['name'] ?? 'Unknown Track' }}</div>
-                        <div class="track-artist">{{ collect($track['artists'] ?? [])->pluck('name')->join(', ') }}</div>
-                    </div>
-                    @php
-                        $ms = $track['duration_ms'] ?? 0;
-                        $mins = floor($ms / 60000);
-                        $secs = str_pad(floor(($ms % 60000) / 1000), 2, '0', STR_PAD_LEFT);
-                    @endphp
-                    @if($ms > 0)
-                        <div class="track-duration">{{ $mins }}:{{ $secs }}</div>
-                    @endif
-                </a>
-            @empty
-                <div class="no-tracks">
-                    <div class="no-tracks-icon">🎶</div>
-                    <p>No recommendations yet.<br>
-                        <span style="font-size:0.82rem;color:rgba(241,240,255,0.25)">Spotify recommendations require a connected
-                            account.</span>
-                    </p>
+            {{-- ── Right: Track playlist ── --}}
+            <section class="tracks-section">
+                <h2>🎶 Your Playlist</h2>
+                <p class="sub">Discovered via Last.fm tags · Enriched with Deezer previews</p>
+
+                <div class="source-badges">
+                    <span class="source-badge badge-lastfm">🎵 Last.fm Tags</span>
+                    <span class="source-badge badge-deezer">🎧 Deezer Previews</span>
                 </div>
-            @endforelse
+
+                @if(!empty($tracks))
+                    <div class="track-list">
+                        @foreach($tracks as $i => $track)
+                            <div class="track-card" id="track-{{ $i }}">
+
+                                {{-- Artwork --}}
+                                <div class="track-artwork">
+                                    @if($track['artwork'])
+                                        <img src="{{ $track['artwork'] }}" alt="{{ $track['title'] }}" loading="lazy">
+                                    @else
+                                        🎵
+                                    @endif
+                                </div>
+
+                                {{-- Info --}}
+                                <div class="track-info">
+                                    <div class="track-title">{{ $track['title'] }}</div>
+                                    <div class="track-artist">{{ $track['artist'] }}</div>
+                                    @if($track['album'])
+                                        <div class="track-album">{{ $track['album'] }}</div>
+                                    @endif
+                                </div>
+
+                                {{-- Actions --}}
+                                <div class="track-actions">
+                                    @if($track['preview'])
+                                        <button class="audio-pill" data-preview="{{ $track['preview'] }}" data-index="{{ $i }}"
+                                            onclick="togglePlay(this)" title="Preview 30s">▶ Preview</button>
+                                    @else
+                                        <span class="audio-pill-no-preview">No preview</span>
+                                    @endif
+
+                                    @if($track['deezer_url'])
+                                        <a href="{{ $track['deezer_url'] }}" target="_blank" rel="noopener" class="deezer-link"
+                                            title="Open on Deezer">
+                                            🔗
+                                        </a>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="empty-state">
+                        <span class="emoji">🎵</span>
+                        <p>No tracks found for this vibe yet.</p>
+                        <p style="font-size:0.8rem; margin-top:0.5rem;">Try uploading a different image.</p>
+                    </div>
+                @endif
+            </section>
         </div>
-    </div>
-@endsection
+    </main>
+
+    {{-- Audio player logic --}}
+    <script>
+        let currentAudio = null;
+        let currentBtn = null;
+
+        function togglePlay(btn) {
+            const previewUrl = btn.dataset.preview;
+
+            // Stop any currently playing track
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+                if (currentBtn) {
+                    currentBtn.textContent = '▶ Preview';
+                    currentBtn.classList.remove('playing');
+                }
+                if (currentBtn === btn) {
+                    currentBtn = null;
+                    return; // Clicking same button stops it
+                }
+            }
+
+            // Start new playback
+            currentAudio = new Audio(previewUrl);
+            currentBtn = btn;
+            btn.textContent = '⏸ Playing';
+            btn.classList.add('playing');
+
+            currentAudio.play().catch(err => {
+                console.warn('Audio play failed:', err);
+                btn.textContent = '▶ Preview';
+                btn.classList.remove('playing');
+            });
+
+            currentAudio.addEventListener('ended', () => {
+                btn.textContent = '▶ Preview';
+                btn.classList.remove('playing');
+                currentAudio = null;
+                currentBtn = null;
+            });
+        }
+    </script>
+</body>
+
+</html>

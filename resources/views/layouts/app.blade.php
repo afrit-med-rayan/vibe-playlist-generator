@@ -7,7 +7,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Vibe Playlist Generator') | VibeCraft</title>
     <meta name="description"
-        content="Turn your photos into personalized Spotify playlists using AI-powered vibe detection.">
+        content="Turn your photos into personalized playlists using AI, Last.fm mood tags, and Deezer previews.">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -258,13 +258,6 @@
                 class="nav-link {{ request()->routeIs('vibe.history') ? 'active' : '' }}">
                 ⏱ History
             </a>
-
-            @if(Auth::user()->spotify_id)
-                <span class="nav-badge-spotify">
-                    <span class="dot"></span>
-                    Spotify Connected
-                </span>
-            @endif
 
             <form method="POST" action="{{ route('logout') }}" style="display:inline">
                 @csrf
