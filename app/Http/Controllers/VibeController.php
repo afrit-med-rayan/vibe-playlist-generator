@@ -3,7 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\VibeSession;
-use App\Services\SpotifyService;
+use App\Services\LastFmService;
+use App\Services\DeezerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
@@ -11,22 +12,26 @@ use Illuminate\Support\Facades\Storage;
 
 class VibeController extends Controller
 {
-    public function __construct(private SpotifyService $spotify)
-    {
+    public function __construct(
+        private LastFmService $lastFm,
+        private DeezerService $deezer
+    ) {
     }
 
-    /**
-     * Show the dashboard / upload page.
-     */
+    // ──────────────────────────────────────────────────────────────────────────
+    // Dashboard
+    // ──────────────────────────────────────────────────────────────────────────
+
     public function dashboard()
     {
         $sessions = Auth::user()->vibeSessions()->latest()->take(5)->get();
         return view('dashboard', compact('sessions'));
     }
 
-    /**
-     * Handle image upload, call AI service, store vibe session.
-     */
+    // ──────────────────────────────────────────────────────────────────────────
+    // Step 1 of pipeline: Image → AI analysis
+    // ──────────────────────────────────────────────────────────────────────────
+
     public function analyze(Request $request)
     {
         $request->validate([
@@ -36,10 +41,10 @@ class VibeController extends Controller
         $user = Auth::user();
         $image = $request->file('image');
 
-        // Store the uploaded image
+        // Store uploaded image
         $path = $image->store('vibes', 'public');
 
-        // Call the Python AI microservice
+        // Call Python AI microservice
         $aiServiceUrl = env('AI_SERVICE_URL', 'http://localhost:8001');
 
         try {
@@ -57,7 +62,7 @@ class VibeController extends Controller
             return back()->withErrors(['image' => 'Could not connect to AI service: ' . $e->getMessage()]);
         }
 
-        // Save vibe session
+        // Persist vibe session (tracks will be fetched on result page)
         $session = VibeSession::create([
             'user_id' => $user->id,
             'image_path' => $path,
@@ -72,115 +77,75 @@ class VibeController extends Controller
         return redirect()->route('vibe.result', $session->id);
     }
 
-    /**
-     * Show vibe analysis result and allow playlist creation.
-     */
+    // ──────────────────────────────────────────────────────────────────────────
+    // Step 2: Show result — Last.fm tags → Deezer track previews
+    // ──────────────────────────────────────────────────────────────────────────
+
     public function result(VibeSession $session)
     {
         $this->authorize('view', $session);
 
-        // Get track recommendations preview from Spotify
-        $user = Auth::user();
-        $token = $this->getFreshToken($user);
-        $tracks = [];
+        // 1. Resolve Last.fm mood tags from vibe features
+        $moodTags = $this->lastFm->getMoodTags(
+            $session->keywords ?? [],
+            $session->energy ?? 0.5,
+            $session->valence ?? 0.5,
+        );
 
-        if ($token) {
-            $tracks = $this->spotify->getRecommendations(
-                $token,
-                $session->energy,
-                $session->valence,
-                $session->tempo,
-                $session->acousticness ?? 0.5
-            );
-        }
+        // 2. Fetch top tracks from Last.fm for the primary mood tag
+        $primaryTag = $moodTags[0] ?? 'chill';
+        $lastFmTracks = $this->lastFm->getTracksByTag($primaryTag, 20);
 
-        return view('vibe.result', compact('session', 'tracks'));
+        // 3. Enrich with Deezer (artwork + preview URLs)
+        $tracks = $this->deezer->buildPlaylist($lastFmTracks);
+
+        return view('vibe.result', compact('session', 'tracks', 'moodTags'));
     }
 
-    /**
-     * Create a Spotify playlist from the vibe session.
-     */
+    // ──────────────────────────────────────────────────────────────────────────
+    // Step 3: "Save playlist" — persist playlist metadata to session
+    // ──────────────────────────────────────────────────────────────────────────
+
     public function createPlaylist(Request $request, VibeSession $session)
     {
         $this->authorize('update', $session);
 
-        $user = Auth::user();
-        $token = $this->getFreshToken($user);
-
-        if (!$token) {
-            return back()->withErrors(['spotify' => 'Spotify authentication failed. Please login again.']);
-        }
-
-        // Get recommendations
-        $tracks = $this->spotify->getRecommendations(
-            $token,
-            $session->energy,
-            $session->valence,
-            $session->tempo,
-            $session->acousticness ?? 0.5
+        // Re-build playlist
+        $moodTags = $this->lastFm->getMoodTags(
+            $session->keywords ?? [],
+            $session->energy ?? 0.5,
+            $session->valence ?? 0.5,
         );
+        $primaryTag = $moodTags[0] ?? 'chill';
+        $lastFmTracks = $this->lastFm->getTracksByTag($primaryTag, 20);
+        $tracks = $this->deezer->buildPlaylist($lastFmTracks);
 
         if (empty($tracks)) {
-            return back()->withErrors(['spotify' => 'No tracks found for this vibe. Try a different image.']);
+            return back()->withErrors(['playlist' => 'No tracks found for this vibe. Try a different image.']);
         }
 
-        // Generate playlist name
+        // Build a human-readable playlist name
         $keywords = $session->keywords ?? [];
         $topKeywords = implode(', ', array_slice($keywords, 0, 3));
-        $playlistName = "Vibe: " . ($topKeywords ?: 'My Playlist') . " 🎵";
-        $description = "Generated by Vibe Playlist Generator from image analysis. " .
-            "Energy: {$session->energy}, Valence: {$session->valence}";
+        $playlistName = 'Vibe: ' . ($topKeywords ?: ucfirst($primaryTag)) . ' 🎵';
 
-        // Create playlist on Spotify
-        $playlist = $this->spotify->createPlaylist(
-            $token,
-            $user->spotify_id,
-            $playlistName,
-            $description
-        );
-
-        if (!$playlist) {
-            return back()->withErrors(['spotify' => 'Failed to create Spotify playlist.']);
-        }
-
-        // Add tracks
-        $trackUris = array_column($tracks, 'uri');
-        $this->spotify->addTracksToPlaylist($token, $playlist['id'], $trackUris);
-
-        // Update session
+        // Persist to session so the result view can show the saved state
         $session->update([
-            'playlist_id' => $playlist['id'],
-            'playlist_url' => $playlist['external_urls']['spotify'] ?? null,
             'playlist_name' => $playlistName,
+            'playlist_url' => count($tracks) > 0 ? ($tracks[0]['deezer_url'] ?? null) : null,
         ]);
 
         return redirect()->route('vibe.result', $session->id)
-            ->with('success', 'Playlist created successfully! 🎶');
+            ->with('success', "Playlist \"{$playlistName}\" saved! 🎶");
     }
 
-    /**
-     * Show vibe session history.
-     */
+    // ──────────────────────────────────────────────────────────────────────────
+    // History
+    // ──────────────────────────────────────────────────────────────────────────
+
     public function history()
     {
         $sessions = Auth::user()->vibeSessions()->latest()->paginate(12);
         return view('vibe.history', compact('sessions'));
-    }
-
-    /**
-     * Get a fresh access token, refreshing if needed.
-     */
-    private function getFreshToken($user): ?string
-    {
-        // Check if token needs refresh (simple approach)
-        if ($user->spotify_refresh_token) {
-            $refreshed = $this->spotify->refreshAccessToken($user->spotify_refresh_token);
-            if ($refreshed && isset($refreshed['access_token'])) {
-                $user->update(['spotify_token' => $refreshed['access_token']]);
-                return $refreshed['access_token'];
-            }
-        }
-
-        return $user->spotify_token;
     }
 }
