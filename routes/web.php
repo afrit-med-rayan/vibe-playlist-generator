@@ -4,16 +4,19 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\VibeController;
 use Illuminate\Support\Facades\Route;
 
-// Landing page
+// ── Public ───────────────────────────────────────────────────────────────────
 Route::get('/', function () {
     return view('welcome');
 });
 
-// Spotify OAuth
-Route::get('/auth/spotify', [AuthController::class, 'redirect'])->name('auth.spotify');
-Route::get('/auth/spotify/callback', [AuthController::class, 'callback']);
+// Auth
+Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+Route::post('/register', [AuthController::class, 'register']);
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// Authenticated routes
+// ── Authenticated ─────────────────────────────────────────────────────────────
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [VibeController::class, 'dashboard'])->name('dashboard');
     Route::post('/vibe/analyze', [VibeController::class, 'analyze'])->name('vibe.analyze');
