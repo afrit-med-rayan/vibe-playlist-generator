@@ -37,6 +37,7 @@ return [
 
     'lastfm' => [
         'api_key' => env('LASTFM_API_KEY'),
+        'shared_secret' => env('LASTFM_SHARED_SECRET'),
     ],
 
 ];
