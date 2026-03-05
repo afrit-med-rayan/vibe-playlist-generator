@@ -14,6 +14,7 @@ class VibeSession extends Model
         'image_path',
         'caption',
         'keywords',
+        'genre_hints',
         'energy',
         'valence',
         'tempo',
@@ -25,6 +26,7 @@ class VibeSession extends Model
 
     protected $casts = [
         'keywords' => 'array',
+        'genre_hints' => 'array',
         'energy' => 'float',
         'valence' => 'float',
         'tempo' => 'float',

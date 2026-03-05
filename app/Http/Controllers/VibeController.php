@@ -48,7 +48,7 @@ class VibeController extends Controller
         $aiServiceUrl = env('AI_SERVICE_URL', 'http://localhost:8001');
 
         try {
-            $response = Http::timeout(60)
+            $response = Http::timeout(90)   // longer timeout — multi-prompt BLIP needs more time
                 ->attach('image', file_get_contents($image->getRealPath()), $image->getClientOriginalName())
                 ->post("{$aiServiceUrl}/analyze-image");
 
@@ -62,12 +62,13 @@ class VibeController extends Controller
             return back()->withErrors(['image' => 'Could not connect to AI service: ' . $e->getMessage()]);
         }
 
-        // Persist vibe session (tracks will be fetched on result page)
+        // Persist vibe session — now also stores genre_hints
         $session = VibeSession::create([
             'user_id' => $user->id,
             'image_path' => $path,
             'caption' => $vibe['caption'] ?? null,
             'keywords' => $vibe['keywords'] ?? [],
+            'genre_hints' => $vibe['genre_hints'] ?? [],   // NEW: AI cultural/style genres
             'energy' => $vibe['energy'] ?? 0.5,
             'valence' => $vibe['valence'] ?? 0.5,
             'tempo' => $vibe['tempo'] ?? 120,
@@ -78,23 +79,28 @@ class VibeController extends Controller
     }
 
     // ──────────────────────────────────────────────────────────────────────────
-    // Step 2: Show result — Last.fm tags → Deezer track previews
+    // Step 2: Show result — Last.fm tags (multi) → Deezer track previews
     // ──────────────────────────────────────────────────────────────────────────
 
     public function result(VibeSession $session)
     {
         $this->authorize('view', $session);
 
-        // 1. Resolve Last.fm mood tags from vibe features
+        // 1. Resolve Last.fm mood tags — genre_hints are now Priority 1
         $moodTags = $this->lastFm->getMoodTags(
             $session->keywords ?? [],
             $session->energy ?? 0.5,
             $session->valence ?? 0.5,
+            $session->genre_hints ?? [],   // pass AI genre hints
         );
 
-        // 2. Fetch top tracks from Last.fm for the primary mood tag
-        $primaryTag = $moodTags[0] ?? 'chill';
-        $lastFmTracks = $this->lastFm->getTracksByTag($primaryTag, 20);
+        // 2. Fetch tracks from ALL resolved tags for a coherent, diverse playlist
+        $lastFmTracks = $this->lastFm->getTracksByTags($moodTags, 30);
+
+        // Fallback: if multi-tag fetch returned nothing, use the primary tag
+        if (empty($lastFmTracks) && !empty($moodTags)) {
+            $lastFmTracks = $this->lastFm->getTracksByTag($moodTags[0], 20);
+        }
 
         // 3. Enrich with Deezer (artwork + preview URLs)
         $tracks = $this->deezer->buildPlaylist($lastFmTracks);
@@ -110,26 +116,28 @@ class VibeController extends Controller
     {
         $this->authorize('update', $session);
 
-        // Re-build playlist
         $moodTags = $this->lastFm->getMoodTags(
             $session->keywords ?? [],
             $session->energy ?? 0.5,
             $session->valence ?? 0.5,
+            $session->genre_hints ?? [],
         );
-        $primaryTag = $moodTags[0] ?? 'chill';
-        $lastFmTracks = $this->lastFm->getTracksByTag($primaryTag, 20);
+
+        $lastFmTracks = $this->lastFm->getTracksByTags($moodTags, 30);
+        if (empty($lastFmTracks) && !empty($moodTags)) {
+            $lastFmTracks = $this->lastFm->getTracksByTag($moodTags[0], 20);
+        }
+
         $tracks = $this->deezer->buildPlaylist($lastFmTracks);
 
         if (empty($tracks)) {
             return back()->withErrors(['playlist' => 'No tracks found for this vibe. Try a different image.']);
         }
 
-        // Build a human-readable playlist name
         $keywords = $session->keywords ?? [];
         $topKeywords = implode(', ', array_slice($keywords, 0, 3));
-        $playlistName = 'Vibe: ' . ($topKeywords ?: ucfirst($primaryTag)) . ' 🎵';
+        $playlistName = 'Vibe: ' . ($topKeywords ?: ucfirst($moodTags[0] ?? 'chill')) . ' 🎵';
 
-        // Persist to session so the result view can show the saved state
         $session->update([
             'playlist_name' => $playlistName,
             'playlist_url' => count($tracks) > 0 ? ($tracks[0]['deezer_url'] ?? null) : null,
