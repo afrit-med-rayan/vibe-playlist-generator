@@ -48,7 +48,7 @@ class VibeController extends Controller
         $aiServiceUrl = env('AI_SERVICE_URL', 'http://localhost:8001');
 
         try {
-            $response = Http::timeout(90)   // longer timeout — multi-prompt BLIP needs more time
+            $response = Http::timeout(300)   // longer timeout — multi-prompt BLIP needs more time
                 ->attach('image', file_get_contents($image->getRealPath()), $image->getClientOriginalName())
                 ->post("{$aiServiceUrl}/analyze-image");
 
