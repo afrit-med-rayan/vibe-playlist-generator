@@ -31,7 +31,7 @@ class DeezerService
     {
         $query = $artist ? "{$artist} {$title}" : $title;
 
-        $response = Http::timeout(8)->get("{$this->baseUrl}/search", [
+        $response = Http::timeout(15)->withUserAgent('vibe-playlist-generator/1.0')->get("{$this->baseUrl}/search", [
             'q' => $query,
             'limit' => 5,
         ]);
@@ -104,7 +104,7 @@ class DeezerService
      */
     public function getChartByGenre(int $genreId = 0, int $limit = 15): array
     {
-        $response = Http::timeout(8)->get("{$this->baseUrl}/chart/{$genreId}/tracks", [
+        $response = Http::timeout(15)->withUserAgent('vibe-playlist-generator/1.0')->get("{$this->baseUrl}/chart/{$genreId}/tracks", [
             'limit' => $limit,
         ]);
 

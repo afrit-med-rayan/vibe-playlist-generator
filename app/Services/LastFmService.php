@@ -96,7 +96,7 @@ class LastFmService
      */
     public function getTracksByTag(string $tag, int $limit = 30, int $page = 1): array
     {
-        $response = Http::timeout(10)->get($this->baseUrl, [
+        $response = Http::timeout(10)->withUserAgent('vibe-playlist-generator/1.0')->get($this->baseUrl, [
             'method' => 'tag.getTopTracks',
             'tag' => $tag,
             'api_key' => $this->apiKey,
@@ -174,7 +174,7 @@ class LastFmService
      */
     public function getSimilarArtists(string $artist, int $limit = 6): array
     {
-        $response = Http::timeout(10)->get($this->baseUrl, [
+        $response = Http::timeout(10)->withUserAgent('vibe-playlist-generator/1.0')->get($this->baseUrl, [
             'method' => 'artist.getSimilar',
             'artist' => $artist,
             'api_key' => $this->apiKey,
@@ -199,7 +199,7 @@ class LastFmService
 
     private function getTagInfo(string $tag): ?array
     {
-        $response = Http::timeout(8)->get($this->baseUrl, [
+        $response = Http::timeout(8)->withUserAgent('vibe-playlist-generator/1.0')->get($this->baseUrl, [
             'method' => 'tag.getInfo',
             'tag' => $tag,
             'api_key' => $this->apiKey,

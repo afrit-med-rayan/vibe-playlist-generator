@@ -103,7 +103,23 @@ class VibeController extends Controller
         }
 
         // 3. Enrich with Deezer (artwork + preview URLs)
-        $tracks = $this->deezer->buildPlaylist($lastFmTracks);
+        // Wrap in try-catch to prevent 500 errors if Deezer API times out
+        try {
+            $tracks = $this->deezer->buildPlaylist($lastFmTracks);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Deezer API Failed in result', ['message' => $e->getMessage()]);
+            // Fallback: build a faux playlist using only Last.fm data
+            $tracks = array_map(fn($t) => [
+                'id' => null,
+                'title' => $t['name'],
+                'artist' => $t['artist'],
+                'album' => null,
+                'artwork' => null,
+                'preview' => null,
+                'deezer_url' => $t['url'] ?? null,
+                'duration' => null,
+            ], $lastFmTracks);
+        }
 
         return view('vibe.result', compact('session', 'tracks', 'moodTags'));
     }
@@ -128,7 +144,21 @@ class VibeController extends Controller
             $lastFmTracks = $this->lastFm->getTracksByTag($moodTags[0], 20);
         }
 
-        $tracks = $this->deezer->buildPlaylist($lastFmTracks);
+        try {
+            $tracks = $this->deezer->buildPlaylist($lastFmTracks);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Deezer API Failed in createPlaylist', ['message' => $e->getMessage()]);
+            $tracks = array_map(fn($t) => [
+                'id' => null,
+                'title' => $t['name'],
+                'artist' => $t['artist'],
+                'album' => null,
+                'artwork' => null,
+                'preview' => null,
+                'deezer_url' => $t['url'] ?? null,
+                'duration' => null,
+            ], $lastFmTracks);
+        }
 
         if (empty($tracks)) {
             return back()->withErrors(['playlist' => 'No tracks found for this vibe. Try a different image.']);
