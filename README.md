@@ -40,25 +40,56 @@ This pattern — decoupling mood detection from playlist delivery — means any 
 
 ---
 
-## 🧠 AI Microservice
+## 🧠 The AI Microservice Deep Dive
 
-Located in `ai-service/`, built with **FastAPI + BLIP (Salesforce/blip-image-captioning-base) + NLTK**.
+Located in `ai-service/`, the Python AI microservice is the brain of the operation. It's built with **FastAPI** for high-performance async routing, **Salesforce's BLIP** (Bootstrapping Language-Image Pre-training) for vision-to-text generation, and **NLTK** for natural language processing.
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/health` | GET | Liveness probe |
-| `/analyze-image` | POST | Upload image → vibe JSON |
-| `/docs` | GET | Swagger UI |
+### The Pipeline: How an Image Becomes a Vibe
 
-**Response shape:**
+When an image is uploaded, it passes through a 4-step pipeline:
+
+#### 1. Multi-Prompt Image Captioning (BLIP)
+A standard image caption (e.g., "a cup of coffee") isn't enough to generate a playlist. The AI runs the image through the BLIP model **four times** using different conditional prompts to extract different semantic layers:
+- *Unconditional:* "a photo of..." (Captures the literal scene)
+- *Conditional 1:* "the art style shown in this image is..." (Captures aesthetics)
+- *Conditional 2:* "the mood and atmosphere of this image is..." (Captures emotion)
+- *Conditional 3:* "the cultural or artistic theme is..." (Captures context)
+
+These outputs are merged into one rich, descriptive paragraph.
+
+#### 2. Dominant Colour & Lighting Extraction
+The image is scaled down and its pixels are converted to the **HSV (Hue, Saturation, Value)** colour space. 
+- High average *Value* injects keywords like `"bright"` or `"luminous"`.
+- Low average *Value* injects keywords like `"shadowy"` or `"dark"`.
+- High *Saturation* adds `"vibrant"`, low adds `"muted"` or `"monochrome"`.
+- The dominant *Hue* is bucketed to inject temperature keywords (`"warm"`, `"cool"`, `"earthy"`).
+
+#### 3. Natural Language Processing (NLTK)
+The combined text (captions + colour traits) is cleaned and tokenized using NLTK. Stopwords are removed, and **Part-of-Speech (POS) tagging** is applied. The system selectively filters the text, keeping only **Nouns** (objects, scenes) and **Adjectives** (emotions, styles). 
+
+#### 4. The `VIBE_MAP` & Cultural Routing
+This is where vision becomes music. The system uses a heavily curated dictionary (`VIBE_MAP`) containing over 100 atmospheric and aesthetic words. 
+
+If a word in the NLP output exists in the VIBE_MAP (e.g., `"melancholy"`, `"cyberpunk"`, `"neon"`), it applies mathematical deltas to four baseline Spotify-style audio features:
+- **Energy:** Intensity and activity measure.
+- **Valence:** Musical positiveness (happy vs. sad).
+- **Tempo:** Estimated BPM.
+- **Acousticness:** Likelihood the track is acoustic vs. electronic.
+
+*Example:* The keyword `"cyberpunk"` increases Energy (+0.20), decreases Acousticness (-0.20), and increases Tempo (+15 BPM). The keyword `"rain"` drops Valence (-0.15) and Energy (-0.15).
+
+Finally, a `STYLE_GENRE_MAP` scans the text for specific cultural or artistic hints (e.g., "zellij", "kimono", "cyberpunk") and translates them into **Priority 1 Last.fm Genre Tags** (e.g., "arabic", "japanese", "synthwave") to ensure the resulting tracks are stylistically accurate, not just emotionally accurate.
+
+**Response payload:**
 ```json
 {
-  "caption":      "a serene lake surrounded by misty mountains",
-  "keywords":     ["lake", "misty", "mountains", "serene"],
-  "energy":       0.25,
-  "valence":      0.55,
-  "tempo":        95.0,
-  "acousticness": 0.78
+  "caption": "a photo of a neon sign. the art style shown in this image is cyberpunk. the mood and atmosphere of this image is dark and futuristic.",
+  "keywords": ["neon", "cyberpunk", "dark", "futuristic", "luminous", "city"],
+  "genre_hints": ["synthwave", "electronic", "industrial"],
+  "energy": 0.85,
+  "valence": 0.35,
+  "tempo": 145.0,
+  "acousticness": 0.05
 }
 ```
 
